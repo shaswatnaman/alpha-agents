@@ -1,0 +1,7 @@
+[
+  {
+    "_comment": "Add real queries and chunk IDs after ingesting your documents.",
+    "_comment2": "Format: { 'query': '...', 'ticker': 'AAPL', 'relevant_chunk_ids': ['chunk-uuid-1', ...] }",
+    "_note": "This file must be populated with real chunk IDs from your document database before running evaluation."
+  }
+]
