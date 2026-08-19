@@ -110,6 +110,8 @@ def chunk_text(
         if chunk:
             chunks.append((chunk, start, end))
 
+        if end >= text_len:
+            break
         start = end - chunk_overlap
         if start <= 0:
             break
