@@ -40,8 +40,8 @@ def _compute_rsi(prices: pd.Series, period: int = 14) -> float | None:
         return None
     delta = prices.diff()
     gain = delta.clip(lower=0).rolling(period).mean()
-    loss = (-delta.clip(upper=0)).rolling(period).mean()
-    rs = gain / loss.replace(0, float("nan"))
+    loss = (-delta.clip(upper=0)).rolling(period).mean().clip(lower=1e-10)
+    rs = gain / loss
     rsi = 100 - (100 / (1 + rs))
     val = rsi.iloc[-1]
     return _safe(val)
