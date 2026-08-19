@@ -10,12 +10,14 @@ Every log record emitted anywhere in the system includes:
 
 Output format: JSON in production, coloured human-readable in development.
 """
+
 from __future__ import annotations
 
 import logging
 import sys
 
 import structlog
+
 from app.config.settings import get_settings
 
 
@@ -37,7 +39,8 @@ def configure_logging() -> None:
         renderer = structlog.dev.ConsoleRenderer(colors=True)
 
     structlog.configure(
-        processors=shared_processors + [
+        processors=shared_processors
+        + [
             structlog.stdlib.ProcessorFormatter.wrap_for_formatter,
         ],
         wrapper_class=structlog.stdlib.BoundLogger,

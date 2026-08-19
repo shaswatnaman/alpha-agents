@@ -1,4 +1,5 @@
 """Tests for domain model validation."""
+
 from __future__ import annotations
 
 import pytest
@@ -11,8 +12,6 @@ from app.domain.models import (
     ClaimType,
     ConfidenceScore,
     ResearchRequest,
-    RiskFactor,
-    Severity,
 )
 
 

@@ -11,12 +11,12 @@ Experiments:
     hybrid        — Dense + Lexical + RRF (no MMR)
     hybrid_mmr    — Dense + Lexical + RRF + MMR (full pipeline)
 """
+
 from __future__ import annotations
 
 import argparse
 import asyncio
 import json
-import time
 from pathlib import Path
 
 import structlog
@@ -50,7 +50,7 @@ async def run_retrieval_experiment(experiment_name: str) -> dict:
     with open(EVAL_DATASET_PATH) as f:
         samples = json.load(f)
 
-    k = 6   # retrieval_final_k
+    k = 6  # retrieval_final_k
     all_precision, all_recall, all_ndcg = [], [], []
 
     async with get_db_context() as session:
@@ -61,18 +61,25 @@ async def run_retrieval_experiment(experiment_name: str) -> dict:
 
             if experiment_name == "dense_only":
                 from app.retrieval.retriever import DenseRetriever
+
                 retriever = DenseRetriever(session)
                 results = await retriever.retrieve(query, ticker, top_k=k)
                 retrieved_ids = [r.chunk.id for r in results]
 
             elif experiment_name == "lexical_only":
                 from app.retrieval.retriever import LexicalRetriever
+
                 retriever = LexicalRetriever(session)
                 results = await retriever.retrieve(query, ticker, top_k=k)
                 retrieved_ids = [r.chunk.id for r in results]
 
             elif experiment_name == "hybrid":
-                from app.retrieval.retriever import DenseRetriever, LexicalRetriever, reciprocal_rank_fusion
+                from app.retrieval.retriever import (
+                    DenseRetriever,
+                    LexicalRetriever,
+                    reciprocal_rank_fusion,
+                )
+
                 dense = await DenseRetriever(session).retrieve(query, ticker, top_k=20)
                 lexical = await LexicalRetriever(session).retrieve(query, ticker, top_k=20)
                 fused = reciprocal_rank_fusion(dense, lexical)[:k]
@@ -80,6 +87,7 @@ async def run_retrieval_experiment(experiment_name: str) -> dict:
 
             elif experiment_name == "hybrid_mmr":
                 from app.retrieval.retriever import HybridRetriever
+
                 h = HybridRetriever(session)
                 evidence = await h.retrieve(query, ticker, final_k=k)
                 retrieved_ids = [ev.chunk_id for ev in evidence]
@@ -110,6 +118,7 @@ async def run_retrieval_experiment(experiment_name: str) -> dict:
 
 def main() -> None:
     from app.observability.logging import configure_logging
+
     configure_logging()
 
     parser = argparse.ArgumentParser(description="AlphaAgents retrieval evaluation")

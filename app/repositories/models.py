@@ -4,6 +4,7 @@ SQLAlchemy ORM models (DB tables).
 Separate from domain/models.py — domain models are pure Pydantic;
 these are the persistence representations with DB-specific types.
 """
+
 from __future__ import annotations
 
 import uuid
@@ -13,8 +14,6 @@ from typing import Any
 from pgvector.sqlalchemy import Vector
 from sqlalchemy import (
     JSON,
-    BigInteger,
-    Boolean,
     DateTime,
     Float,
     ForeignKey,
@@ -24,12 +23,12 @@ from sqlalchemy import (
     Text,
     func,
 )
-from sqlalchemy.dialects.postgresql import TSVECTOR, UUID
+from sqlalchemy.dialects.postgresql import TSVECTOR
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.repositories.database import Base
 
-EMBEDDING_DIM = 1536   # text-embedding-3-small dimension
+EMBEDDING_DIM = 1536  # text-embedding-3-small dimension
 
 
 class DocumentORM(Base):
@@ -46,18 +45,20 @@ class DocumentORM(Base):
     fiscal_quarter: Mapped[int | None] = mapped_column(Integer, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
-    chunks: Mapped[list[ChunkORM]] = relationship("ChunkORM", back_populates="document", cascade="all, delete-orphan")
-
-    __table_args__ = (
-        Index("ix_documents_ticker_type", "ticker", "document_type"),
+    chunks: Mapped[list[ChunkORM]] = relationship(
+        "ChunkORM", back_populates="document", cascade="all, delete-orphan"
     )
+
+    __table_args__ = (Index("ix_documents_ticker_type", "ticker", "document_type"),)
 
 
 class ChunkORM(Base):
     __tablename__ = "chunks"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    document_id: Mapped[str] = mapped_column(ForeignKey("documents.id", ondelete="CASCADE"), nullable=False, index=True)
+    document_id: Mapped[str] = mapped_column(
+        ForeignKey("documents.id", ondelete="CASCADE"), nullable=False, index=True
+    )
     chunk_index: Mapped[int] = mapped_column(Integer, nullable=False)
     text: Mapped[str] = mapped_column(Text, nullable=False)
     char_start: Mapped[int] = mapped_column(Integer, nullable=False)
@@ -75,8 +76,13 @@ class ChunkORM(Base):
 
     __table_args__ = (
         # IVFFlat index for approximate nearest-neighbour search
-        Index("ix_chunks_embedding_cosine", "embedding", postgresql_using="ivfflat",
-              postgresql_with={"lists": 100}, postgresql_ops={"embedding": "vector_cosine_ops"}),
+        Index(
+            "ix_chunks_embedding_cosine",
+            "embedding",
+            postgresql_using="ivfflat",
+            postgresql_with={"lists": 100},
+            postgresql_ops={"embedding": "vector_cosine_ops"},
+        ),
         Index("ix_chunks_text_tsv", "text_tsv", postgresql_using="gin"),
         Index("ix_chunks_document_id", "document_id"),
     )
@@ -88,13 +94,17 @@ class ResearchRequestORM(Base):
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     ticker: Mapped[str] = mapped_column(String(20), nullable=False, index=True)
     company_name: Mapped[str | None] = mapped_column(String(256), nullable=True)
-    idempotency_key: Mapped[str | None] = mapped_column(String(256), nullable=True, unique=True, index=True)
+    idempotency_key: Mapped[str | None] = mapped_column(
+        String(256), nullable=True, unique=True, index=True
+    )
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="pending")
     report_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
     requested_by: Mapped[str | None] = mapped_column(String(256), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
 
     agent_runs: Mapped[list[AgentRunORM]] = relationship("AgentRunORM", back_populates="request")
 
@@ -108,7 +118,9 @@ class AgentRunORM(Base):
     __tablename__ = "agent_runs"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    research_id: Mapped[str] = mapped_column(ForeignKey("research_requests.id", ondelete="CASCADE"), nullable=False, index=True)
+    research_id: Mapped[str] = mapped_column(
+        ForeignKey("research_requests.id", ondelete="CASCADE"), nullable=False, index=True
+    )
     agent_role: Mapped[str] = mapped_column(String(50), nullable=False)
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="pending")
     output_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
@@ -118,7 +130,9 @@ class AgentRunORM(Base):
     failure_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
-    request: Mapped[ResearchRequestORM] = relationship("ResearchRequestORM", back_populates="agent_runs")
+    request: Mapped[ResearchRequestORM] = relationship(
+        "ResearchRequestORM", back_populates="agent_runs"
+    )
 
 
 class ResearchReportORM(Base):

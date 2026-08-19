@@ -1,12 +1,11 @@
 """
 Research endpoints — the primary API surface.
 """
+
 from __future__ import annotations
 
-import json
-
 import structlog
-from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, Request, status
+from fastapi import APIRouter, Depends, Header, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.cache.rate_limiter import api_limiter, research_limiter
@@ -18,7 +17,6 @@ from app.repositories.research_repository import ResearchRepository
 from app.schemas.api import (
     AgentSummary,
     EvidenceSummary,
-    ErrorResponse,
     ResearchCreatedResponse,
     ResearchReportResponse,
     ResearchRequestBody,
@@ -91,7 +89,9 @@ async def get_research_status(
     repo = ResearchRepository(db)
     req = await repo.get_request(research_id)
     if req is None:
-        raise HTTPException(status_code=404, detail={"error": "not_found", "message": "Research request not found"})
+        raise HTTPException(
+            status_code=404, detail={"error": "not_found", "message": "Research request not found"}
+        )
 
     # Live pipeline stage from Redis
     redis = await get_redis()
@@ -121,15 +121,16 @@ async def get_research_report(
 ) -> ResearchReportResponse:
     await api_limiter.check(api_key)
 
-    settings = get_settings()
     redis = await get_redis()
 
     # Try Redis cache first
     from app.observability.metrics import cache_hit_counter, cache_miss_counter
+
     cached = await redis.get(f"research:report:{research_id}")
     if cached:
         cache_hit_counter.labels(cache_name="research_report").inc()
         from app.domain.models import ResearchReport
+
         report = ResearchReport.model_validate_json(cached)
     else:
         cache_miss_counter.labels(cache_name="research_report").inc()
@@ -138,7 +139,10 @@ async def get_research_report(
         if report is None:
             raise HTTPException(
                 status_code=404,
-                detail={"error": "not_found", "message": "Report not found or pipeline still running"},
+                detail={
+                    "error": "not_found",
+                    "message": "Report not found or pipeline still running",
+                },
             )
 
     return ResearchReportResponse(
@@ -179,22 +183,27 @@ async def get_agent_summaries(
         repo = ResearchRepository(db)
         report = await repo.get_report(research_id)
         if report is None:
-            raise HTTPException(status_code=404, detail={"error": "not_found", "message": "Report not found"})
+            raise HTTPException(
+                status_code=404, detail={"error": "not_found", "message": "Report not found"}
+            )
     else:
         from app.domain.models import ResearchReport
+
         report = ResearchReport.model_validate_json(cached)
 
     summaries = []
     for role, agent_report in report.agent_reports.items():
-        summaries.append(AgentSummary(
-            agent=role,
-            status="failed" if agent_report.failed else "completed",
-            confidence=agent_report.confidence,
-            summary=agent_report.summary,
-            execution_time_ms=agent_report.execution_time_ms,
-            token_usage=agent_report.token_usage,
-            failure_reason=agent_report.failure_reason,
-        ))
+        summaries.append(
+            AgentSummary(
+                agent=role,
+                status="failed" if agent_report.failed else "completed",
+                confidence=agent_report.confidence,
+                summary=agent_report.summary,
+                execution_time_ms=agent_report.execution_time_ms,
+                token_usage=agent_report.token_usage,
+                failure_reason=agent_report.failure_reason,
+            )
+        )
     return summaries
 
 
@@ -214,12 +223,15 @@ async def get_evidence(
     cached = await redis.get(f"research:report:{research_id}")
     if cached:
         from app.domain.models import ResearchReport
+
         report = ResearchReport.model_validate_json(cached)
     else:
         repo = ResearchRepository(db)
         report = await repo.get_report(research_id)
         if report is None:
-            raise HTTPException(status_code=404, detail={"error": "not_found", "message": "Report not found"})
+            raise HTTPException(
+                status_code=404, detail={"error": "not_found", "message": "Report not found"}
+            )
 
     seen: set[str] = set()
     evidence_list = []
@@ -227,14 +239,16 @@ async def get_evidence(
         for ev in citation.evidence:
             if ev.id not in seen:
                 seen.add(ev.id)
-                evidence_list.append(EvidenceSummary(
-                    id=ev.id,
-                    document_id=ev.document_id,
-                    chunk_id=ev.chunk_id,
-                    source_filename=ev.source_filename,
-                    document_type=ev.document_type,
-                    quote=ev.quote,
-                    relevance_score=ev.relevance_score,
-                    retrieval_method=ev.retrieval_method,
-                ))
+                evidence_list.append(
+                    EvidenceSummary(
+                        id=ev.id,
+                        document_id=ev.document_id,
+                        chunk_id=ev.chunk_id,
+                        source_filename=ev.source_filename,
+                        document_type=ev.document_type,
+                        quote=ev.quote,
+                        relevance_score=ev.relevance_score,
+                        retrieval_method=ev.retrieval_method,
+                    )
+                )
     return evidence_list

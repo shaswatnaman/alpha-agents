@@ -3,11 +3,13 @@ Integration tests for FastAPI endpoints.
 Uses httpx.AsyncClient against the in-process app.
 All external dependencies (LLM, DB, Redis) are mocked.
 """
+
 from __future__ import annotations
 
+from unittest.mock import AsyncMock, patch
+
 import pytest
-from httpx import AsyncClient, ASGITransport
-from unittest.mock import AsyncMock, patch, MagicMock
+from httpx import ASGITransport, AsyncClient
 
 from app.main import app
 
@@ -57,7 +59,10 @@ class TestResearchEndpoints:
             patch("app.api.v1.research.get_db"),
             patch("app.api.v1.research.api_limiter.check", new_callable=AsyncMock),
             patch("app.api.v1.research.research_limiter.check", new_callable=AsyncMock),
-            patch("app.services.orchestrator.ResearchOrchestrator.start_research", new_callable=AsyncMock) as mock_start,
+            patch(
+                "app.services.orchestrator.ResearchOrchestrator.start_research",
+                new_callable=AsyncMock,
+            ) as mock_start,
         ):
             mock_start.return_value = "test-research-id-123"
 
@@ -73,9 +78,7 @@ class TestResearchEndpoints:
         assert data["status"] == "pending"
 
     @pytest.mark.asyncio
-    async def test_get_status_not_found(
-        self, client: AsyncClient, api_headers: dict
-    ) -> None:
+    async def test_get_status_not_found(self, client: AsyncClient, api_headers: dict) -> None:
         with (
             patch("app.api.v1.research.api_limiter.check", new_callable=AsyncMock),
             patch("app.api.v1.research.get_db"),

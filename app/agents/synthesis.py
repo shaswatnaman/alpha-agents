@@ -4,9 +4,9 @@ Synthesis Agent
 Integrates fundamental + technical + sentiment reports plus critic findings
 into a final structured ResearchReport.
 """
+
 from __future__ import annotations
 
-import json
 import time
 from typing import Annotated
 
@@ -17,12 +17,9 @@ from app.agents.base import BaseAgent
 from app.domain.models import (
     AgentReport,
     AgentRole,
-    Citation,
-    ConfidenceScore,
     ConflictingSignal,
     CriticFinding,
     Evidence,
-    ResearchReport,
     RiskFactor,
     Sentiment,
 )
@@ -63,7 +60,7 @@ def _format_critic(findings: list[CriticFinding]) -> str:
     lines = []
     for cf in findings:
         lines.append(
-            f"[{cf.severity}] {cf.affected_agent}: \"{cf.affected_claim}\"\n"
+            f'[{cf.severity}] {cf.affected_agent}: "{cf.affected_claim}"\n'
             f"  Issue: {cf.issue}\n"
             f"  Recommendation: {cf.recommendation}"
         )
@@ -110,9 +107,12 @@ Synthesise all of the above into a research report.
         try:
             output, llm_resp = await self._call(user_message, SynthesisOutput)
             elapsed_ms = int((time.monotonic() - t0) * 1000)
-            agent_execution_histogram.labels(agent=self.role.value, status="success").observe(elapsed_ms / 1000)
+            agent_execution_histogram.labels(agent=self.role.value, status="success").observe(
+                elapsed_ms / 1000
+            )
 
             from app.domain.models import AgentFinding, ClaimType
+
             report = AgentReport(
                 agent=self.role,
                 research_id=research_id,

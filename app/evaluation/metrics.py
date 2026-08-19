@@ -4,6 +4,7 @@ Evaluation metric computation.
 All metrics are computed deterministically from ground-truth labels.
 We NEVER claim improvements without measured data.
 """
+
 from __future__ import annotations
 
 import math
@@ -43,9 +44,7 @@ def ndcg_at_k(retrieved: list[str], relevant: list[str], k: int) -> float:
 
     def dcg(items: list[str]) -> float:
         return sum(
-            (1.0 / math.log2(i + 2))
-            for i, item in enumerate(items[:k])
-            if item in relevant_set
+            (1.0 / math.log2(i + 2)) for i, item in enumerate(items[:k]) if item in relevant_set
         )
 
     idcg = dcg(list(relevant_set)[:k])
@@ -102,6 +101,10 @@ def agent_agreement_rate(reports: list[dict[str, Any]]) -> float:
     ]
     if len(sentiments) < 2:
         return 1.0  # single agent, trivially "agrees with itself"
-    pairs = [(sentiments[i], sentiments[j]) for i in range(len(sentiments)) for j in range(i + 1, len(sentiments))]
+    pairs = [
+        (sentiments[i], sentiments[j])
+        for i in range(len(sentiments))
+        for j in range(i + 1, len(sentiments))
+    ]
     agreed = sum(1 for a, b in pairs if a == b)
     return agreed / len(pairs)

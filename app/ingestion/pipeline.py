@@ -11,18 +11,17 @@ Document ingestion pipeline:
 
 Every step is independent and can be retested in isolation.
 """
+
 from __future__ import annotations
 
 import hashlib
 import io
 import re
-from datetime import datetime
-from typing import BinaryIO
 
 import structlog
 
 from app.config.settings import get_settings
-from app.domain.models import Document, DocumentChunk, DocumentMetadata, DocumentType
+from app.domain.models import Document, DocumentChunk, DocumentMetadata
 from app.llm.provider import get_llm_provider
 
 log = structlog.get_logger(__name__)
@@ -30,23 +29,26 @@ log = structlog.get_logger(__name__)
 
 # ── Text Extraction ───────────────────────────────────────────────────────────
 
+
 def extract_text_from_pdf(data: bytes) -> str:
     try:
         import pypdf
+
         reader = pypdf.PdfReader(io.BytesIO(data))
         pages = [page.extract_text() or "" for page in reader.pages]
         return "\n\n".join(pages)
-    except ImportError:
-        raise RuntimeError("pypdf not installed. Run: pip install pypdf")
+    except ImportError as err:
+        raise RuntimeError("pypdf not installed. Run: pip install pypdf") from err
 
 
 def extract_text_from_docx(data: bytes) -> str:
     try:
         import docx
+
         doc = docx.Document(io.BytesIO(data))
         return "\n\n".join(p.text for p in doc.paragraphs if p.text.strip())
-    except ImportError:
-        raise RuntimeError("python-docx not installed.")
+    except ImportError as err:
+        raise RuntimeError("python-docx not installed.") from err
 
 
 def extract_text(data: bytes, filename: str) -> str:
@@ -63,6 +65,7 @@ def extract_text(data: bytes, filename: str) -> str:
 
 # ── Cleaning ──────────────────────────────────────────────────────────────────
 
+
 def clean_text(text: str) -> str:
     # Collapse excessive whitespace while preserving paragraph breaks
     text = re.sub(r"[ \t]+", " ", text)
@@ -73,6 +76,7 @@ def clean_text(text: str) -> str:
 
 
 # ── Chunking ──────────────────────────────────────────────────────────────────
+
 
 def chunk_text(
     text: str,
@@ -115,6 +119,7 @@ def chunk_text(
 
 # ── Embedding ─────────────────────────────────────────────────────────────────
 
+
 async def embed_chunks(chunks: list[DocumentChunk]) -> list[DocumentChunk]:
     """
     Embed chunk texts in batches of 100 (API limit).
@@ -127,13 +132,14 @@ async def embed_chunks(chunks: list[DocumentChunk]) -> list[DocumentChunk]:
         batch = chunks[i : i + batch_size]
         texts = [c.text for c in batch]
         embeddings = await provider.embed(texts)
-        for chunk, embedding in zip(batch, embeddings):
+        for chunk, embedding in zip(batch, embeddings, strict=True):
             chunk.embedding = embedding
 
     return chunks
 
 
 # ── Pipeline Entry Point ──────────────────────────────────────────────────────
+
 
 async def ingest_document(
     data: bytes,

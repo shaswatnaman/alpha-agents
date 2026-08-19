@@ -7,18 +7,19 @@ to "calculate" RSI or MACD — it receives the already-computed numbers
 as part of its context.  This is the single most important hallucination-
 prevention measure in the technical analysis pipeline.
 """
+
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime, timedelta
+from datetime import datetime
 
+import numpy as np
+import pandas as pd
 import structlog
 import yfinance as yf
-import pandas as pd
-import numpy as np
 
-from app.domain.models import FundamentalMetrics, TechnicalIndicators
 from app.config.settings import get_settings
+from app.domain.models import FundamentalMetrics, TechnicalIndicators
 
 log = structlog.get_logger(__name__)
 

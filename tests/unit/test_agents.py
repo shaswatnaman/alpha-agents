@@ -2,22 +2,23 @@
 Unit tests for agent classes — LLM is fully mocked.
 Tests verify prompt construction, structured output parsing, and failure handling.
 """
+
 from __future__ import annotations
 
+from datetime import datetime
+from unittest.mock import AsyncMock
+
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
 
 from app.agents.fundamental import FundamentalAgent
-from app.agents.technical import TechnicalAgent
 from app.agents.sentiment import SentimentAgent
+from app.agents.technical import TechnicalAgent
 from app.domain.models import (
     AgentRole,
-    ClaimType,
     FundamentalMetrics,
     TechnicalIndicators,
 )
 from app.llm.provider import LLMResponse
-from datetime import datetime
 
 
 def _mock_llm_response(content: str) -> LLMResponse:
@@ -79,11 +80,10 @@ class TestFundamentalAgent:
         }
 
         import json
+
         mock_provider = AsyncMock()
         mock_provider.embed = AsyncMock(return_value=[[0.1] * 10])
-        mock_provider.complete = AsyncMock(
-            return_value=_mock_llm_response(json.dumps(mock_output))
-        )
+        mock_provider.complete = AsyncMock(return_value=_mock_llm_response(json.dumps(mock_output)))
 
         agent = FundamentalAgent(provider=mock_provider)
         report = await agent.run(
@@ -118,8 +118,9 @@ class TestFundamentalAgent:
 
 class TestTechnicalAgent:
     @pytest.mark.asyncio
-    async def test_run_returns_agent_report(self, technical_indicators: TechnicalIndicators) -> None:
-        from app.domain.models import Sentiment
+    async def test_run_returns_agent_report(
+        self, technical_indicators: TechnicalIndicators
+    ) -> None:
         mock_output = {
             "findings": [
                 {
@@ -136,10 +137,9 @@ class TestTechnicalAgent:
         }
 
         import json
+
         mock_provider = AsyncMock()
-        mock_provider.complete = AsyncMock(
-            return_value=_mock_llm_response(json.dumps(mock_output))
-        )
+        mock_provider.complete = AsyncMock(return_value=_mock_llm_response(json.dumps(mock_output)))
 
         agent = TechnicalAgent(provider=mock_provider)
         report = await agent.run(

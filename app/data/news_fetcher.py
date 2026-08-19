@@ -4,10 +4,10 @@ News fetcher — pulls recent articles about a ticker from multiple sources.
 Returns raw article text.  The Sentiment agent analyses this text;
 it never invents news that wasn't fetched here.
 """
+
 from __future__ import annotations
 
 import asyncio
-import hashlib
 from dataclasses import dataclass
 from datetime import datetime
 
@@ -84,7 +84,7 @@ async def fetch_news(ticker: str) -> list[NewsArticle]:
 
         bodies = await asyncio.gather(*tasks, return_exceptions=True)
 
-    for meta, body in zip(metas, bodies):
+    for meta, body in zip(metas, bodies, strict=False):
         if isinstance(body, Exception) or not body:
             body = ""
         title = meta.get("title", "")

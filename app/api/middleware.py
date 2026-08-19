@@ -1,6 +1,7 @@
 """
 FastAPI middleware: request IDs, latency tracking, structured logging.
 """
+
 from __future__ import annotations
 
 import time

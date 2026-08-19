@@ -1,9 +1,8 @@
 """Tests for deterministic technical indicator computation."""
+
 from __future__ import annotations
 
-import numpy as np
 import pandas as pd
-import pytest
 
 from app.data.market_data import _compute_macd, _compute_rsi, _safe
 

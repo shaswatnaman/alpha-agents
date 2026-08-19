@@ -7,9 +7,9 @@ Reviews the three specialist agent outputs and challenges:
 - Overconfident ratings on thin evidence
 - Stale or missing data risks
 """
+
 from __future__ import annotations
 
-import json
 import time
 from typing import Annotated
 
@@ -21,7 +21,6 @@ from app.domain.models import (
     AgentReport,
     AgentRole,
     CriticFinding,
-    RiskFactor,
     Severity,
 )
 from app.observability.metrics import agent_execution_histogram
@@ -43,12 +42,12 @@ def _format_report(report: AgentReport) -> str:
         f"Agent: {report.agent}",
         f"Confidence: {report.confidence:.2f}",
         f"Summary: {report.summary}",
-        f"\nFindings:",
+        "\nFindings:",
     ]
     for f in report.findings:
         lines.append(f"  [{f.claim_type}] {f.claim}  (evidence_ids: {f.evidence_ids or 'NONE'})")
     if report.risks:
-        lines.append(f"\nRisks:")
+        lines.append("\nRisks:")
         for r in report.risks:
             lines.append(f"  [{r.severity}] {r.description}")
     return "\n".join(lines)
@@ -85,9 +84,12 @@ Apply your critic review instructions and produce a structured list of findings.
         try:
             output, llm_resp = await self._call(user_message, CriticAgentOutput)
             elapsed_ms = int((time.monotonic() - t0) * 1000)
-            agent_execution_histogram.labels(agent=self.role.value, status="success").observe(elapsed_ms / 1000)
+            agent_execution_histogram.labels(agent=self.role.value, status="success").observe(
+                elapsed_ms / 1000
+            )
 
             from app.domain.models import AgentFinding, ClaimType
+
             report = AgentReport(
                 agent=self.role,
                 research_id=research_id,

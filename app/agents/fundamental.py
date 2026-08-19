@@ -8,9 +8,9 @@ Input:
 Output:
 - Structured AgentReport with findings referencing evidence IDs
 """
+
 from __future__ import annotations
 
-import json
 import time
 from typing import Annotated
 
@@ -22,11 +22,9 @@ from app.domain.models import (
     AgentFinding,
     AgentReport,
     AgentRole,
-    ClaimType,
     Evidence,
     FundamentalMetrics,
     RiskFactor,
-    Severity,
 )
 from app.observability.metrics import agent_execution_histogram
 
@@ -47,27 +45,27 @@ def _format_metrics(metrics: FundamentalMetrics) -> str:
         if v is None:
             return "N/A"
         if abs(v) >= 1e9:
-            return f"${v/1e9:.2f}B{suffix}"
+            return f"${v / 1e9:.2f}B{suffix}"
         if abs(v) >= 1e6:
-            return f"${v/1e6:.2f}M{suffix}"
+            return f"${v / 1e6:.2f}M{suffix}"
         return f"{v:.4f}{suffix}"
 
     return f"""
 FINANCIAL METRICS (as of {metrics.as_of_date.date()}):
 - Market Cap: {fmt(metrics.market_cap)}
 - Revenue (TTM): {fmt(metrics.revenue_ttm)}
-- Revenue Growth (YoY): {fmt(metrics.revenue_growth_yoy, '%') if metrics.revenue_growth_yoy else 'N/A'}
-- Gross Margin: {f'{metrics.gross_margin*100:.1f}%' if metrics.gross_margin else 'N/A'}
-- Operating Margin: {f'{metrics.operating_margin*100:.1f}%' if metrics.operating_margin else 'N/A'}
-- Net Margin: {f'{metrics.net_margin*100:.1f}%' if metrics.net_margin else 'N/A'}
+- Revenue Growth (YoY): {fmt(metrics.revenue_growth_yoy, "%") if metrics.revenue_growth_yoy else "N/A"}
+- Gross Margin: {f"{metrics.gross_margin * 100:.1f}%" if metrics.gross_margin else "N/A"}
+- Operating Margin: {f"{metrics.operating_margin * 100:.1f}%" if metrics.operating_margin else "N/A"}
+- Net Margin: {f"{metrics.net_margin * 100:.1f}%" if metrics.net_margin else "N/A"}
 - Free Cash Flow: {fmt(metrics.free_cash_flow)}
 - Debt/Equity: {fmt(metrics.debt_to_equity)}
 - Current Ratio: {fmt(metrics.current_ratio)}
 - P/E Ratio: {fmt(metrics.pe_ratio)}
 - P/B Ratio: {fmt(metrics.pb_ratio)}
 - EPS (TTM): {fmt(metrics.eps_ttm)}
-- Dividend Yield: {f'{metrics.dividend_yield*100:.2f}%' if metrics.dividend_yield else 'N/A'}
-Data errors: {metrics.fetch_errors or 'None'}
+- Dividend Yield: {f"{metrics.dividend_yield * 100:.2f}%" if metrics.dividend_yield else "N/A"}
+Data errors: {metrics.fetch_errors or "None"}
 """.strip()
 
 
@@ -75,11 +73,11 @@ def _format_evidence(evidence: list[Evidence]) -> str:
     if not evidence:
         return "No document evidence available."
     lines = []
-    for i, ev in enumerate(evidence, 1):
+    for _i, ev in enumerate(evidence, 1):
         date_str = ev.published_date.strftime("%Y-%m") if ev.published_date else "unknown date"
         lines.append(
             f"[{ev.id[:8]}] ({ev.source_filename}, {date_str}, {ev.retrieval_method}):\n"
-            f"  \"{ev.quote[:300]}\""
+            f'  "{ev.quote[:300]}"'
         )
     return "\n\n".join(lines)
 
@@ -113,9 +111,9 @@ Reference evidence by its 8-character ID prefix when making claims.
             output, llm_resp = await self._call(user_message, FundamentalAgentOutput)
             elapsed_ms = int((time.monotonic() - t0) * 1000)
 
-            agent_execution_histogram.labels(
-                agent=self.role.value, status="success"
-            ).observe(elapsed_ms / 1000)
+            agent_execution_histogram.labels(agent=self.role.value, status="success").observe(
+                elapsed_ms / 1000
+            )
 
             evidence_ids = [ev.id for ev in evidence]
 

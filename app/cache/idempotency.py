@@ -9,6 +9,7 @@ without re-running the expensive pipeline.
 Key format: idempotency:{key}
 Value: JSON of the existing research_id
 """
+
 from __future__ import annotations
 
 import json

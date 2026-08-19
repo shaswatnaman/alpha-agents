@@ -8,12 +8,13 @@ Why sliding window over fixed window:
 - Fixed windows allow burst at the boundary (2x rate in 2 seconds)
 - Sliding window enforces a smooth limit regardless of timing
 """
+
 from __future__ import annotations
 
 import time
 
 import structlog
-from fastapi import HTTPException, Request, status
+from fastapi import HTTPException, status
 
 from app.cache.redis_client import get_redis
 from app.config.settings import get_settings

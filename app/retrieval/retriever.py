@@ -20,12 +20,12 @@ Why each layer exists:
 
 See docs/RAG.md for detailed explanation.
 """
+
 from __future__ import annotations
 
 import asyncio
 import time
 from dataclasses import dataclass
-from typing import Any
 
 import numpy as np
 import structlog
@@ -42,10 +42,11 @@ log = structlog.get_logger(__name__)
 class ScoredChunk:
     chunk: DocumentChunk
     score: float
-    method: str   # "dense" | "lexical" | "hybrid"
+    method: str  # "dense" | "lexical" | "hybrid"
 
 
 # ── Dense Retrieval ───────────────────────────────────────────────────────────
+
 
 class DenseRetriever:
     """
@@ -71,6 +72,7 @@ class DenseRetriever:
 
         # Import here to avoid circular dependency
         from app.repositories.chunk_repository import ChunkRepository
+
         repo = ChunkRepository(self._session)
         results = await repo.search_by_embedding(
             embedding=query_embedding,
@@ -83,11 +85,11 @@ class DenseRetriever:
         retrieval_latency_histogram.labels(method="dense").observe(latency)
         retrieval_chunk_counter.labels(method="dense").inc(len(results))
 
-        return [ScoredChunk(chunk=chunk, score=score, method="dense")
-                for chunk, score in results]
+        return [ScoredChunk(chunk=chunk, score=score, method="dense") for chunk, score in results]
 
 
 # ── Lexical Retrieval ─────────────────────────────────────────────────────────
+
 
 class LexicalRetriever:
     """
@@ -109,6 +111,7 @@ class LexicalRetriever:
     ) -> list[ScoredChunk]:
         t0 = time.monotonic()
         from app.repositories.chunk_repository import ChunkRepository
+
         repo = ChunkRepository(self._session)
         results = await repo.search_by_fulltext(
             query=query,
@@ -121,11 +124,11 @@ class LexicalRetriever:
         retrieval_latency_histogram.labels(method="lexical").observe(latency)
         retrieval_chunk_counter.labels(method="lexical").inc(len(results))
 
-        return [ScoredChunk(chunk=chunk, score=score, method="lexical")
-                for chunk, score in results]
+        return [ScoredChunk(chunk=chunk, score=score, method="lexical") for chunk, score in results]
 
 
 # ── Reciprocal Rank Fusion ────────────────────────────────────────────────────
+
 
 def reciprocal_rank_fusion(
     *ranked_lists: list[ScoredChunk],
@@ -154,6 +157,7 @@ def reciprocal_rank_fusion(
 
 
 # ── MMR Reranking ─────────────────────────────────────────────────────────────
+
 
 def mmr_rerank(
     candidates: list[ScoredChunk],
@@ -186,10 +190,7 @@ def mmr_rerank(
         return float(np.dot(na, nb) / (np.linalg.norm(na) * np.linalg.norm(nb) + 1e-10))
 
     # Relevance to query (normalised)
-    relevances = [
-        cos_sim(c.chunk.embedding or [], list(q_norm))
-        for c in candidates
-    ]
+    relevances = [cos_sim(c.chunk.embedding or [], list(q_norm)) for c in candidates]
 
     selected: list[ScoredChunk] = []
     remaining = list(range(len(candidates)))
@@ -216,11 +217,13 @@ def mmr_rerank(
                 best_idx = i
 
         if best_idx >= 0:
-            selected.append(ScoredChunk(
-                chunk=candidates[best_idx].chunk,
-                score=best_score,
-                method="mmr",
-            ))
+            selected.append(
+                ScoredChunk(
+                    chunk=candidates[best_idx].chunk,
+                    score=best_score,
+                    method="mmr",
+                )
+            )
             remaining.remove(best_idx)
 
     return selected
@@ -228,12 +231,14 @@ def mmr_rerank(
 
 # ── Evidence Packaging ────────────────────────────────────────────────────────
 
+
 async def pack_evidence(
     scored_chunks: list[ScoredChunk],
     session: AsyncSession,
 ) -> list[Evidence]:
     """Convert scored chunks into Evidence objects with document metadata."""
     from app.repositories.document_repository import DocumentRepository
+
     doc_repo = DocumentRepository(session)
 
     evidence: list[Evidence] = []
@@ -242,21 +247,24 @@ async def pack_evidence(
         doc = await doc_repo.get_by_id(chunk.document_id)
         if doc is None:
             continue
-        evidence.append(Evidence(
-            document_id=chunk.document_id,
-            chunk_id=chunk.id,
-            source_filename=doc.filename,
-            document_type=doc.metadata.document_type,
-            published_date=doc.metadata.published_date,
-            quote=chunk.text[:500],   # excerpt for citation
-            relevance_score=max(0.0, min(1.0, sc.score)),
-            retrieval_method=sc.method,
-        ))
+        evidence.append(
+            Evidence(
+                document_id=chunk.document_id,
+                chunk_id=chunk.id,
+                source_filename=doc.filename,
+                document_type=doc.metadata.document_type,
+                published_date=doc.metadata.published_date,
+                quote=chunk.text[:500],  # excerpt for citation
+                relevance_score=max(0.0, min(1.0, sc.score)),
+                retrieval_method=sc.method,
+            )
+        )
 
     return evidence
 
 
 # ── Hybrid Retriever (Public Interface) ───────────────────────────────────────
+
 
 class HybridRetriever:
     """
@@ -282,6 +290,7 @@ class HybridRetriever:
         lambda_: float | None = None,
     ) -> list[Evidence]:
         from app.config.settings import get_settings
+
         settings = get_settings()
         _top_k = top_k or settings.retrieval_top_k
         _final_k = final_k or settings.retrieval_final_k

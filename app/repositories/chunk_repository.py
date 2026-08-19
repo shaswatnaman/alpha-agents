@@ -1,6 +1,7 @@
 """
 Repository for document chunk retrieval — both vector and full-text.
 """
+
 from __future__ import annotations
 
 from typing import Any
@@ -30,18 +31,21 @@ class ChunkRepository:
             ON CONFLICT (id) DO NOTHING
         """)
         for chunk in chunks:
-            await self._session.execute(stmt, {
-                "id": chunk.id,
-                "document_id": chunk.document_id,
-                "chunk_index": chunk.chunk_index,
-                "text": chunk.text,
-                "char_start": chunk.char_start,
-                "char_end": chunk.char_end,
-                "section_title": chunk.section_title,
-                "page_number": chunk.page_number,
-                "embedding": chunk.embedding,
-                "chunk_metadata": chunk.metadata,
-            })
+            await self._session.execute(
+                stmt,
+                {
+                    "id": chunk.id,
+                    "document_id": chunk.document_id,
+                    "chunk_index": chunk.chunk_index,
+                    "text": chunk.text,
+                    "char_start": chunk.char_start,
+                    "char_end": chunk.char_end,
+                    "section_title": chunk.section_title,
+                    "page_number": chunk.page_number,
+                    "embedding": chunk.embedding,
+                    "chunk_metadata": chunk.metadata,
+                },
+            )
 
     async def search_by_embedding(
         self,
@@ -64,7 +68,9 @@ class ChunkRepository:
 
         if document_types:
             type_filter = "AND d.document_type = ANY(:doc_types)"
-            params["doc_types"] = [dt.value if hasattr(dt, "value") else dt for dt in document_types]
+            params["doc_types"] = [
+                dt.value if hasattr(dt, "value") else dt for dt in document_types
+            ]
 
         stmt = text(f"""
             SELECT
@@ -103,7 +109,9 @@ class ChunkRepository:
         }
         if document_types:
             type_filter = "AND d.document_type = ANY(:doc_types)"
-            params["doc_types"] = [dt.value if hasattr(dt, "value") else dt for dt in document_types]
+            params["doc_types"] = [
+                dt.value if hasattr(dt, "value") else dt for dt in document_types
+            ]
 
         stmt = text(f"""
             SELECT

@@ -6,9 +6,11 @@ Usage:
     redis = await get_redis()
     await redis.set("key", "value", ex=300)
 """
+
 from __future__ import annotations
 
 import redis.asyncio as aioredis
+
 from app.config.settings import get_settings
 
 _pool: aioredis.ConnectionPool | None = None

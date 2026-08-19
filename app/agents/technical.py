@@ -4,20 +4,20 @@ Technical Analyst Agent
 Input: pre-computed TechnicalIndicators (never ask the LLM to compute numbers)
 Output: structured AgentReport with market signal findings
 """
+
 from __future__ import annotations
 
 import time
 from typing import Annotated
 
-from pydantic import BaseModel, Field
 import structlog
+from pydantic import BaseModel, Field
 
 from app.agents.base import BaseAgent
 from app.domain.models import (
     AgentFinding,
     AgentReport,
     AgentRole,
-    ClaimType,
     RiskFactor,
     Sentiment,
     TechnicalIndicators,
@@ -37,7 +37,7 @@ class TechnicalAgentOutput(BaseModel):
 
 def _format_indicators(ind: TechnicalIndicators) -> str:
     def pct(v: float | None) -> str:
-        return f"{v*100:.1f}%" if v is not None else "N/A"
+        return f"{v * 100:.1f}%" if v is not None else "N/A"
 
     def f(v: float | None, dec: int = 2) -> str:
         return f"{v:.{dec}f}" if v is not None else "N/A"
@@ -63,7 +63,7 @@ Risk / Returns:
   3M Annualised Return:  {pct(ind.annualized_return_3m)}
   20D Avg Volume:        {f(ind.volume_avg_20d, 0)}
 
-Computation errors: {ind.computation_errors or 'None'}
+Computation errors: {ind.computation_errors or "None"}
 """.strip()
 
 
@@ -93,7 +93,9 @@ Set evidence_ids to an empty list for all findings.
         try:
             output, llm_resp = await self._call(user_message, TechnicalAgentOutput)
             elapsed_ms = int((time.monotonic() - t0) * 1000)
-            agent_execution_histogram.labels(agent=self.role.value, status="success").observe(elapsed_ms / 1000)
+            agent_execution_histogram.labels(agent=self.role.value, status="success").observe(
+                elapsed_ms / 1000
+            )
 
             return AgentReport(
                 agent=self.role,

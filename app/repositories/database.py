@@ -6,10 +6,11 @@ All database access goes through get_db() as a FastAPI dependency,
 ensuring each request gets its own session and the session is
 committed/rolled-back and closed cleanly regardless of outcome.
 """
+
 from __future__ import annotations
 
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator
 
 from sqlalchemy.ext.asyncio import (
     AsyncSession,

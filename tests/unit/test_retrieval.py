@@ -1,10 +1,9 @@
 """Tests for the retrieval pipeline components."""
+
 from __future__ import annotations
 
-import pytest
-
-from app.retrieval.retriever import mmr_rerank, reciprocal_rank_fusion, ScoredChunk
 from app.domain.models import DocumentChunk
+from app.retrieval.retriever import ScoredChunk, mmr_rerank, reciprocal_rank_fusion
 
 
 def _make_chunk(id: str, embedding: list[float]) -> ScoredChunk:
@@ -65,4 +64,4 @@ class TestMMRRerank:
         chunks = [_make_chunk(str(i), emb[:]) for i in range(5)]
         result = mmr_rerank(chunks, [1.0, 0.0], final_k=5, lambda_=0.5)
         ids = [r.chunk.id for r in result]
-        assert len(ids) == len(set(ids))   # no duplicates
+        assert len(ids) == len(set(ids))  # no duplicates

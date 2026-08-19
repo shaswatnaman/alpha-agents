@@ -52,10 +52,10 @@ class Settings(BaseSettings):
     redis_max_connections: int = 20
 
     # ── Caching ───────────────────────────────────────────────────────────────
-    research_cache_ttl_seconds: int = 3600          # 1 hour
-    retrieval_cache_ttl_seconds: int = 1800         # 30 minutes
-    market_data_cache_ttl_seconds: int = 300        # 5 minutes
-    idempotency_key_ttl_seconds: int = 86400        # 24 hours
+    research_cache_ttl_seconds: int = 3600  # 1 hour
+    retrieval_cache_ttl_seconds: int = 1800  # 30 minutes
+    market_data_cache_ttl_seconds: int = 300  # 5 minutes
+    idempotency_key_ttl_seconds: int = 86400  # 24 hours
 
     # ── Rate Limiting ─────────────────────────────────────────────────────────
     rate_limit_requests_per_minute: int = 20
@@ -64,9 +64,9 @@ class Settings(BaseSettings):
     # ── RAG ───────────────────────────────────────────────────────────────────
     chunk_size: int = 512
     chunk_overlap: int = 64
-    retrieval_top_k: int = 20          # candidates before reranking
-    retrieval_final_k: int = 6         # chunks passed to agents
-    mmr_lambda: float = 0.6            # balance relevance vs diversity
+    retrieval_top_k: int = 20  # candidates before reranking
+    retrieval_final_k: int = 6  # chunks passed to agents
+    mmr_lambda: float = 0.6  # balance relevance vs diversity
 
     # ── Ingestion ─────────────────────────────────────────────────────────────
     max_upload_size_mb: int = 50

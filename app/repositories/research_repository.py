@@ -6,7 +6,12 @@ from datetime import datetime
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.domain.models import AgentReport, AgentRole, ResearchReport, ResearchRequest, ResearchStatus
+from app.domain.models import (
+    AgentReport,
+    ResearchReport,
+    ResearchRequest,
+    ResearchStatus,
+)
 from app.repositories.models import AgentRunORM, ResearchReportORM, ResearchRequestORM
 
 
@@ -47,9 +52,7 @@ class ResearchRepository:
         if error_message is not None:
             values["error_message"] = error_message
         await self._session.execute(
-            update(ResearchRequestORM)
-            .where(ResearchRequestORM.id == research_id)
-            .values(**values)
+            update(ResearchRequestORM).where(ResearchRequestORM.id == research_id).values(**values)
         )
 
     # ── Agent Runs ───────────────────────────────────────────────────────────

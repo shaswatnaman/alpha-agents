@@ -4,17 +4,18 @@ Core domain models — pure Pydantic, no I/O.
 These are the lingua franca of the entire system.  Every agent, service,
 and repository speaks in terms of these types.
 """
+
 from __future__ import annotations
 
 import uuid
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Annotated, Any
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-
 # ── Identifiers ───────────────────────────────────────────────────────────────
+
 
 def new_id() -> str:
     return str(uuid.uuid4())
@@ -22,15 +23,16 @@ def new_id() -> str:
 
 # ── Enums ─────────────────────────────────────────────────────────────────────
 
-class ResearchStatus(str, Enum):
+
+class ResearchStatus(StrEnum):
     PENDING = "pending"
     RUNNING = "running"
     COMPLETED = "completed"
     FAILED = "failed"
-    PARTIAL = "partial"          # completed with some agent failures
+    PARTIAL = "partial"  # completed with some agent failures
 
 
-class AgentRole(str, Enum):
+class AgentRole(StrEnum):
     FUNDAMENTAL = "fundamental"
     TECHNICAL = "technical"
     SENTIMENT = "sentiment"
@@ -38,20 +40,20 @@ class AgentRole(str, Enum):
     SYNTHESIS = "synthesis"
 
 
-class Sentiment(str, Enum):
+class Sentiment(StrEnum):
     BULLISH = "bullish"
     BEARISH = "bearish"
     NEUTRAL = "neutral"
     MIXED = "mixed"
 
 
-class ClaimType(str, Enum):
-    FACT = "fact"               # directly supported by evidence
-    INFERENCE = "inference"     # derived from facts via reasoning
-    UNCERTAINTY = "uncertainty" # explicitly flagged as uncertain
+class ClaimType(StrEnum):
+    FACT = "fact"  # directly supported by evidence
+    INFERENCE = "inference"  # derived from facts via reasoning
+    UNCERTAINTY = "uncertainty"  # explicitly flagged as uncertain
 
 
-class DocumentType(str, Enum):
+class DocumentType(StrEnum):
     ANNUAL_REPORT = "annual_report"
     QUARTERLY_REPORT = "quarterly_report"
     SEC_FILING = "sec_filing"
@@ -61,7 +63,7 @@ class DocumentType(str, Enum):
     OTHER = "other"
 
 
-class Severity(str, Enum):
+class Severity(StrEnum):
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
@@ -69,6 +71,7 @@ class Severity(str, Enum):
 
 
 # ── Base ──────────────────────────────────────────────────────────────────────
+
 
 class DomainModel(BaseModel):
     model_config = ConfigDict(
@@ -79,6 +82,7 @@ class DomainModel(BaseModel):
 
 
 # ── Documents & Chunks ────────────────────────────────────────────────────────
+
 
 class DocumentMetadata(DomainModel):
     ticker: str
@@ -94,7 +98,7 @@ class DocumentMetadata(DomainModel):
 class Document(DomainModel):
     id: str = Field(default_factory=new_id)
     filename: str
-    content_hash: str           # SHA-256 of raw bytes; prevents re-ingestion
+    content_hash: str  # SHA-256 of raw bytes; prevents re-ingestion
     metadata: DocumentMetadata
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
@@ -108,32 +112,36 @@ class DocumentChunk(DomainModel):
     char_end: int
     section_title: str | None = None
     page_number: int | None = None
-    embedding: list[float] | None = None    # populated after embedding step
+    embedding: list[float] | None = None  # populated after embedding step
     metadata: dict[str, Any] = Field(default_factory=dict)
 
 
 # ── Evidence ──────────────────────────────────────────────────────────────────
 
+
 class Evidence(DomainModel):
     """A traceable piece of retrieved context backing an agent claim."""
+
     id: str = Field(default_factory=new_id)
     document_id: str
     chunk_id: str
     source_filename: str
     document_type: DocumentType
     published_date: datetime | None = None
-    quote: str                  # verbatim excerpt from the chunk
-    relevance_score: float      # similarity score from retrieval (0-1)
-    retrieval_method: str       # "dense" | "lexical" | "hybrid"
+    quote: str  # verbatim excerpt from the chunk
+    relevance_score: float  # similarity score from retrieval (0-1)
+    retrieval_method: str  # "dense" | "lexical" | "hybrid"
 
 
 # ── Agent Outputs ─────────────────────────────────────────────────────────────
 
+
 class AgentFinding(DomainModel):
     """A single factual or inferred finding from an agent."""
+
     claim: str
     claim_type: ClaimType
-    evidence_ids: list[str] = Field(default_factory=list)   # references Evidence.id
+    evidence_ids: list[str] = Field(default_factory=list)  # references Evidence.id
     confidence: Annotated[float, Field(ge=0.0, le=1.0)]
 
 
@@ -146,6 +154,7 @@ class RiskFactor(DomainModel):
 
 class CriticFinding(DomainModel):
     """Output of the Critic/Risk agent challenging another agent's output."""
+
     affected_agent: AgentRole
     affected_claim: str
     issue: str
@@ -155,6 +164,7 @@ class CriticFinding(DomainModel):
 
 class TechnicalIndicators(DomainModel):
     """Deterministically computed market indicators — never hallucinated."""
+
     ticker: str
     as_of_date: datetime
     current_price: float | None = None
@@ -176,6 +186,7 @@ class TechnicalIndicators(DomainModel):
 
 class FundamentalMetrics(DomainModel):
     """Key financial metrics fetched from structured data sources."""
+
     ticker: str
     as_of_date: datetime
     market_cap: float | None = None
@@ -196,6 +207,7 @@ class FundamentalMetrics(DomainModel):
 
 class AgentReport(DomainModel):
     """Structured output from a specialist agent."""
+
     agent: AgentRole
     research_id: str
     findings: list[AgentFinding]
@@ -211,6 +223,7 @@ class AgentReport(DomainModel):
 
 
 # ── Research Report ───────────────────────────────────────────────────────────
+
 
 class ConfidenceScore(DomainModel):
     overall: Annotated[float, Field(ge=0.0, le=1.0)]
@@ -236,6 +249,7 @@ class ConflictingSignal(DomainModel):
 
 class ResearchReport(DomainModel):
     """Final structured output of the full research pipeline."""
+
     id: str = Field(default_factory=new_id)
     research_id: str
     ticker: str
@@ -250,7 +264,7 @@ class ResearchReport(DomainModel):
     confidence: ConfidenceScore
     overall_sentiment: Sentiment
     critic_findings: list[CriticFinding]
-    agent_reports: dict[str, AgentReport]    # keyed by AgentRole value
+    agent_reports: dict[str, AgentReport]  # keyed by AgentRole value
     created_at: datetime = Field(default_factory=datetime.utcnow)
     total_execution_time_ms: int = 0
     total_tokens: int = 0
@@ -258,6 +272,7 @@ class ResearchReport(DomainModel):
 
 
 # ── Research Request ──────────────────────────────────────────────────────────
+
 
 class ResearchRequest(DomainModel):
     id: str = Field(default_factory=new_id)
@@ -279,6 +294,7 @@ class ResearchRequest(DomainModel):
 
 
 # ── Evaluation ────────────────────────────────────────────────────────────────
+
 
 class RetrievalEvalSample(DomainModel):
     query: str

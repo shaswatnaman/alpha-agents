@@ -4,6 +4,7 @@ Provider-agnostic LLM interface.
 Every agent uses LLMProvider.complete() — never calls OpenAI directly.
 Swapping to Anthropic/Gemini/local requires only a new implementation class.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -26,8 +27,8 @@ T = TypeVar("T", bound=BaseModel)
 # Cost per 1k tokens (USD) — update as pricing changes
 _OPENAI_COST_TABLE: dict[str, dict[str, float]] = {
     "gpt-4o-mini": {"input": 0.00015, "output": 0.00060},
-    "gpt-4o":       {"input": 0.00250, "output": 0.01000},
-    "gpt-4-turbo":  {"input": 0.01000, "output": 0.03000},
+    "gpt-4o": {"input": 0.00250, "output": 0.01000},
+    "gpt-4-turbo": {"input": 0.01000, "output": 0.03000},
 }
 
 
@@ -101,7 +102,7 @@ class OpenAIProvider(LLMProvider):
         last_exc: Exception | None = None
         for attempt in range(self._max_retries + 1):
             if attempt > 0:
-                backoff = 2 ** attempt
+                backoff = 2**attempt
                 log.warning(
                     "llm_retry",
                     attempt=attempt,
@@ -163,7 +164,9 @@ class OpenAIProvider(LLMProvider):
                 if attempt == self._max_retries:
                     raise
 
-        raise RuntimeError(f"LLM request failed after {self._max_retries + 1} attempts") from last_exc
+        raise RuntimeError(
+            f"LLM request failed after {self._max_retries + 1} attempts"
+        ) from last_exc
 
     async def _call_api(
         self,

@@ -1,6 +1,7 @@
 """
 Document ingestion endpoint — upload PDFs/TXTs for RAG.
 """
+
 from __future__ import annotations
 
 import structlog
@@ -46,7 +47,10 @@ async def upload_document(
     if ext not in settings.allowed_document_types:
         raise HTTPException(
             status_code=400,
-            detail={"error": "unsupported_file_type", "message": f"Supported types: {settings.allowed_document_types}"},
+            detail={
+                "error": "unsupported_file_type",
+                "message": f"Supported types: {settings.allowed_document_types}",
+            },
         )
 
     data = await file.read()
@@ -59,6 +63,7 @@ async def upload_document(
     # Check for duplicate (content hash)
     doc_repo = DocumentRepository(db)
     import hashlib
+
     content_hash = hashlib.sha256(data).hexdigest()
     existing = await doc_repo.get_by_hash(content_hash)
     if existing:

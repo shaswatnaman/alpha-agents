@@ -1,7 +1,6 @@
 """Tests for the document ingestion pipeline."""
-from __future__ import annotations
 
-import pytest
+from __future__ import annotations
 
 from app.ingestion.pipeline import chunk_text, clean_text
 
@@ -28,7 +27,7 @@ class TestChunkText:
         assert chunks[0][0] == text
 
     def test_multiple_chunks_on_long_text(self) -> None:
-        text = "word " * 500   # 2500 chars
+        text = "word " * 500  # 2500 chars
         chunks = chunk_text(text, chunk_size=256, chunk_overlap=32)
         assert len(chunks) > 1
 
@@ -55,5 +54,5 @@ class TestChunkText:
     def test_chunk_size_respected(self) -> None:
         text = "x" * 1000
         chunks = chunk_text(text, chunk_size=200, chunk_overlap=0)
-        for chunk_text_, start, end in chunks:
-            assert len(chunk_text_) <= 300   # some slack for sentence boundary extension
+        for chunk_text_, _start, _end in chunks:
+            assert len(chunk_text_) <= 300  # some slack for sentence boundary extension

@@ -1,9 +1,6 @@
 from __future__ import annotations
 
-import json
-from datetime import datetime
-
-from sqlalchemy import select, text
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.models import Document, DocumentMetadata, DocumentType
@@ -30,7 +27,9 @@ class DocumentRepository:
 
     async def list_by_ticker(self, ticker: str) -> list[Document]:
         result = await self._session.execute(
-            select(DocumentORM).where(DocumentORM.ticker == ticker).order_by(DocumentORM.created_at.desc())
+            select(DocumentORM)
+            .where(DocumentORM.ticker == ticker)
+            .order_by(DocumentORM.created_at.desc())
         )
         return [_orm_to_domain(row) for row in result.scalars().all()]
 

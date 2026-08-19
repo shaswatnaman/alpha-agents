@@ -5,6 +5,7 @@ These are the contracts exposed to external callers.
 Domain models are richer internal representations;
 these schemas control what is serialised over the wire.
 """
+
 from __future__ import annotations
 
 from datetime import datetime
@@ -13,17 +14,15 @@ from typing import Any
 from pydantic import BaseModel, Field
 
 from app.domain.models import (
-    AgentRole,
     ConfidenceScore,
     CriticFinding,
-    Evidence,
     ResearchStatus,
     RiskFactor,
     Sentiment,
 )
 
-
 # ── Requests ──────────────────────────────────────────────────────────────────
+
 
 class ResearchRequestBody(BaseModel):
     ticker: str = Field(..., description="Stock ticker symbol (e.g. AAPL, MSFT)")
@@ -48,6 +47,7 @@ class DocumentUploadResponse(BaseModel):
 
 # ── Responses ─────────────────────────────────────────────────────────────────
 
+
 class ResearchCreatedResponse(BaseModel):
     research_id: str
     status: ResearchStatus
@@ -62,12 +62,12 @@ class ResearchStatusResponse(BaseModel):
     updated_at: datetime
     report_id: str | None = None
     error_message: str | None = None
-    pipeline_stage: str | None = None   # live status from Redis
+    pipeline_stage: str | None = None  # live status from Redis
 
 
 class AgentSummary(BaseModel):
     agent: str
-    status: str   # "completed" | "failed" | "unavailable"
+    status: str  # "completed" | "failed" | "unavailable"
     confidence: float | None = None
     summary: str | None = None
     execution_time_ms: int = 0

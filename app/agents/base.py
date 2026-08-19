@@ -7,9 +7,9 @@ Handles:
 - Execution timing
 - Failure isolation: agents return a failed AgentReport rather than raising
 """
+
 from __future__ import annotations
 
-import time
 from pathlib import Path
 from typing import TypeVar
 
@@ -18,7 +18,7 @@ from pydantic import BaseModel
 
 from app.domain.models import AgentReport, AgentRole
 from app.llm.provider import LLMProvider, LLMResponse, get_llm_provider
-from app.observability.metrics import agent_execution_histogram, agent_failure_counter
+from app.observability.metrics import agent_failure_counter
 
 log = structlog.get_logger(__name__)
 

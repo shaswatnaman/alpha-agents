@@ -1,10 +1,11 @@
 """
 AlphaAgents FastAPI application entry point.
 """
+
 from __future__ import annotations
 
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator
 
 import structlog
 from fastapi import FastAPI, Request
@@ -26,7 +27,9 @@ log = structlog.get_logger(__name__)
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     configure_logging()
     settings = get_settings()
-    log.info("startup", app=settings.app_name, version=settings.app_version, env=settings.environment)
+    log.info(
+        "startup", app=settings.app_name, version=settings.app_version, env=settings.environment
+    )
     yield
     await close_redis()
     log.info("shutdown")
@@ -48,7 +51,7 @@ def create_app() -> FastAPI:
     app.add_middleware(RequestIDMiddleware)
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],   # Restrict in production
+        allow_origins=["*"],  # Restrict in production
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],

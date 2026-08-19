@@ -4,10 +4,10 @@ Sentiment Analyst Agent
 Input: list of fetched NewsArticle objects (never hallucinates news)
 Output: structured AgentReport with sentiment findings
 """
+
 from __future__ import annotations
 
 import time
-from datetime import datetime
 from typing import Annotated
 
 import structlog
@@ -19,8 +19,6 @@ from app.domain.models import (
     AgentFinding,
     AgentReport,
     AgentRole,
-    ClaimType,
-    Evidence,
     RiskFactor,
     Sentiment,
 )
@@ -46,7 +44,9 @@ def _format_articles(articles: list[NewsArticle]) -> str:
     lines = []
     for i, art in enumerate(articles, 1):
         date_str = art.published_at.strftime("%Y-%m-%d") if art.published_at else "unknown date"
-        body_preview = art.body[:MAX_ARTICLE_BODY_CHARS].replace("\n", " ") if art.body else "(no body)"
+        body_preview = (
+            art.body[:MAX_ARTICLE_BODY_CHARS].replace("\n", " ") if art.body else "(no body)"
+        )
         lines.append(
             f"Article {i} [{date_str}] — {art.source}\n"
             f"Title: {art.title}\n"
@@ -76,7 +76,7 @@ class SentimentAgent(BaseAgent):
                 findings=[],
                 confidence=0.0,
                 summary="No news articles were available for sentiment analysis.",
-                failed=False,   # not a failure — just no data
+                failed=False,  # not a failure — just no data
                 execution_time_ms=elapsed_ms,
             )
 
@@ -94,7 +94,9 @@ Set evidence_ids to an empty list (news articles are not stored as document chun
         try:
             output, llm_resp = await self._call(user_message, SentimentAgentOutput)
             elapsed_ms = int((time.monotonic() - t0) * 1000)
-            agent_execution_histogram.labels(agent=self.role.value, status="success").observe(elapsed_ms / 1000)
+            agent_execution_histogram.labels(agent=self.role.value, status="success").observe(
+                elapsed_ms / 1000
+            )
 
             return AgentReport(
                 agent=self.role,
